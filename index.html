@@ -44,7 +44,7 @@ input[type=range]{accent-color:#FF7A45;}
 <div ref="{{ rootRef }}" style="position:relative;background:#070B14;color:#E8EEF8;font-family:Inter,sans-serif;overflow-x:clip;">
 
   <div aria-hidden="true" style="position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none;">
-    <img src="./assets/img7.jpg" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0.28;">
+    <img src="./assets/img7.webp" fetchpriority="high" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0.28;">
     <div ref="{{ blob1 }}" style="position:absolute;left:-10%;top:-10%;width:60vw;height:60vw;border-radius:50%;background:radial-gradient(circle,rgba(60,231,255,0.16) 0%,rgba(60,231,255,0) 65%);"></div>
     <div ref="{{ blob2 }}" style="position:absolute;right:-15%;top:20%;width:55vw;height:55vw;border-radius:50%;background:radial-gradient(circle,rgba(139,124,255,0.18) 0%,rgba(139,124,255,0) 65%);"></div>
     <div ref="{{ blob3 }}" style="position:absolute;left:20%;bottom:-25%;width:50vw;height:50vw;border-radius:50%;background:radial-gradient(circle,rgba(255,122,69,0.12) 0%,rgba(255,122,69,0) 65%);"></div>
@@ -53,7 +53,7 @@ input[type=range]{accent-color:#FF7A45;}
 
   <header style="position:fixed;top:0;left:0;right:0;z-index:20;display:flex;justify-content:space-between;align-items:center;gap:16px;padding:16px clamp(16px,4vw,40px);background:rgba(7,11,20,0.55);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:1px solid rgba(255,255,255,0.08);">
     <a href="#top" style="display:flex;align-items:center;gap:10px;font-family:'Space Grotesk',sans-serif;font-size:22px;font-weight:600;color:#F2F6FC;letter-spacing:-0.02em;">
-      <span style="width:28px;height:28px;background-image:url(./assets/img8.jpg);background-size:415% auto;background-position:95% 49%;background-color:#0b1220;border-radius:50%;filter:contrast(1.6) brightness(0.85);"></span>
+      <span style="width:28px;height:28px;background-image:url(./assets/img8.webp);background-size:415% auto;background-position:95% 49%;background-color:#0b1220;border-radius:50%;filter:contrast(1.6) brightness(0.85);"></span>
       <span>podkit</span>
     </a>
     <nav style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;font-size:14px;">
@@ -70,7 +70,7 @@ input[type=range]{accent-color:#FF7A45;}
       
     <div style="max-width:1200px;width:100%;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:48px;align-items:center;">
         <div style="position:relative;width:min(100%,480px);aspect-ratio:1;margin:0 auto;">
-          <div role="img" aria-label="podkit glass hexagon mark" style="position:absolute;inset:0;background-image:url(./assets/img8.jpg);background-size:415% auto;background-position:95% 49%;background-repeat:no-repeat;mix-blend-mode:screen;filter:contrast(1.7) brightness(0.8);-webkit-mask-image:radial-gradient(circle,#000 40%,transparent 58%);mask-image:radial-gradient(circle,#000 40%,transparent 58%);transition:opacity 1.2s ease, transform 1.2s cubic-bezier(.16,1,.3,1);opacity:{{ heroHexOpacity }};transform:{{ heroHexTransform }};"></div>
+          <div role="img" aria-label="podkit glass hexagon mark" style="position:absolute;inset:0;background-image:url(./assets/img8.webp);background-size:415% auto;background-position:95% 49%;background-repeat:no-repeat;mix-blend-mode:screen;filter:contrast(1.7) brightness(0.8);-webkit-mask-image:radial-gradient(circle,#000 40%,transparent 58%);mask-image:radial-gradient(circle,#000 40%,transparent 58%);transition:opacity 1.2s ease, transform 1.2s cubic-bezier(.16,1,.3,1);opacity:{{ heroHexOpacity }};transform:{{ heroHexTransform }};"></div>
           <canvas ref="{{ heroRef }}" width="560" height="560" aria-hidden="true" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;"></canvas>
         </div>
         <div style="display:flex;flex-direction:column;gap:24px;">
@@ -196,7 +196,7 @@ input[type=range]{accent-color:#FF7A45;}
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:20px;perspective:1200px;">
           <sc-for list="{{ tiles }}" as="t" hint-placeholder-count="6">
             <div data-reveal="flip" onMouseEnter="{{ t.onEnter }}" onMouseLeave="{{ t.onLeave }}" onClick="{{ t.onEnter }}" style="display:flex;gap:18px;align-items:center;padding:20px 22px;min-height:150px;cursor:default;background:rgba(255,255,255,0.08);border:1px solid {{ t.border }};border-radius:24px;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);box-shadow:{{ t.glow }};transform:{{ t.lift }};transition:transform .25s, box-shadow .25s, border-color .25s;">
-              <div aria-hidden="true" style="flex:none;width:110px;height:90px;background-image:url(./assets/img5.jpg);background-size:320% 213%;background-position:{{ t.pos }};mix-blend-mode:screen;"></div>
+              <div aria-hidden="true" style="flex:none;width:110px;height:90px;background-image:url(./assets/img5.webp);background-size:320% 213%;background-position:{{ t.pos }};mix-blend-mode:screen;"></div>
               <div style="display:flex;flex-direction:column;gap:6px;min-width:0;">
                 <span style="font-family:'Space Grotesk',sans-serif;font-size:19px;font-weight:600;color:#F2F6FC;line-height:1.2;">{{ t.title }}</span>
                 <span style="font-size:15px;line-height:1.45;color:{{ t.textColor }};">{{ t.text }}</span>
@@ -270,7 +270,7 @@ input[type=range]{accent-color:#FF7A45;}
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:40px;align-items:center;">
           <div data-reveal="up" style="position:relative;width:min(100%,560px);aspect-ratio:1130/1040;margin:0 auto;">
             <div role="img" aria-label="podkit core: a glowing glass sphere with seven orbiting modules" style="position:absolute;inset:0;overflow:hidden;-webkit-mask-image:radial-gradient(ellipse 56% 56% at 50% 50%,#000 82%,transparent 100%);mask-image:radial-gradient(ellipse 56% 56% at 50% 50%,#000 82%,transparent 100%);">
-              <img src="./assets/img4.jpg" alt="" style="position:absolute;width:170.9%;height:auto;left:-35.4%;top:-5.77%;mix-blend-mode:screen;">
+              <img src="./assets/img4.webp" loading="lazy" decoding="async" alt="" style="position:absolute;width:170.9%;height:auto;left:-35.4%;top:-5.77%;mix-blend-mode:screen;">
             </div>
             <button onMouseEnter="{{ coreEnter }}" onFocus="{{ coreEnter }}" onClick="{{ coreEnter }}" aria-label="One source of truth" style="position:absolute;left:50%;top:51.6%;width:28%;aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%;padding:0;cursor:pointer;background:transparent;border:2px solid {{ coreBorder }};box-shadow:{{ coreGlow }};transition:box-shadow .25s, border-color .25s;"></button>
             <sc-for list="{{ nodes }}" as="n" hint-placeholder-count="7">
@@ -351,7 +351,7 @@ input[type=range]{accent-color:#FF7A45;}
             </div>
           </div>
           <div style="position:relative;width:min(100%,520px);aspect-ratio:1;margin:0 auto;">
-            <img src="./assets/img1.jpg" alt="The data engine: stacked glass plates above glowing rings, streams of data flowing through." style="position:absolute;inset:8%;width:84%;height:84%;object-fit:cover;mix-blend-mode:screen;-webkit-mask-image:radial-gradient(circle,#000 55%,transparent 71%);mask-image:radial-gradient(circle,#000 55%,transparent 71%);filter:{{ engineFilter }};transition:filter .3s;">
+            <img src="./assets/img1.webp" loading="lazy" decoding="async" alt="The data engine: stacked glass plates above glowing rings, streams of data flowing through." style="position:absolute;inset:8%;width:84%;height:84%;object-fit:cover;mix-blend-mode:screen;-webkit-mask-image:radial-gradient(circle,#000 55%,transparent 71%);mask-image:radial-gradient(circle,#000 55%,transparent 71%);filter:{{ engineFilter }};transition:filter .3s;">
             <div style="position:absolute;inset:2%;border-radius:50%;border:1px solid rgba(190,180,255,{{ ringAlpha }});box-shadow:0 0 40px rgba(139,124,255,{{ ringAlpha }});"></div>
             <span style="position:absolute;top:0;left:50%;transform:translate(-50%,-50%);padding:6px 14px;border-radius:999px;background:rgba(10,9,24,0.85);border:1px solid rgba(190,180,255,0.4);font-size:14px;color:#E4E0FF;opacity:{{ ringOpacity }};">prediction</span>
             <span style="position:absolute;top:50%;right:0;transform:translate(40%,-50%);padding:6px 14px;border-radius:999px;background:rgba(10,9,24,0.85);border:1px solid rgba(190,180,255,0.4);font-size:14px;color:#E4E0FF;opacity:{{ ringOpacity }};">guidance</span>
@@ -368,7 +368,7 @@ input[type=range]{accent-color:#FF7A45;}
         <h2 data-reveal="up" style="font-family:'Space Grotesk',sans-serif;font-size:clamp(32px,4.4vw,56px);font-weight:600;letter-spacing:-0.02em;line-height:1.05;margin:12px 0 32px;color:#F2F6FC;">What each one gets</h2>
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(max(calc(25% - 15px),min(calc(50% - 10px),calc((860px - 100%) * 999)),min(100%,calc((540px - 100%) * 999))),1fr));gap:20px;">
           <div data-reveal="up" style="display:flex;flex-direction:column;padding:28px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.18);border-radius:24px;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);transition:transform .25s, box-shadow .25s;" style-hover="transform:translateY(-2px);box-shadow:0 0 40px rgba(60,231,255,0.18);">
-            <div aria-hidden="true" style="width:96px;height:96px;background-image:url(./assets/img0.jpg);background-size:495% auto;background-position:15.5% 51%;background-repeat:no-repeat;mix-blend-mode:screen;-webkit-mask-image:radial-gradient(circle,#000 45%,transparent 70%);mask-image:radial-gradient(circle,#000 45%,transparent 70%);"></div>
+            <div aria-hidden="true" style="width:96px;height:96px;background-image:url(./assets/img0.webp);background-size:495% auto;background-position:15.5% 51%;background-repeat:no-repeat;mix-blend-mode:screen;-webkit-mask-image:radial-gradient(circle,#000 45%,transparent 70%);mask-image:radial-gradient(circle,#000 45%,transparent 70%);"></div>
             <div style="font-family:'Space Grotesk',sans-serif;font-size:24px;font-weight:600;color:#F2F6FC;margin-top:8px;">Delivery</div>
             <div style="font-size:15px;color:#C9D2E3;margin-top:6px;">Fewer discards, predictable throughput.</div>
             <div style="margin-top:auto;padding-top:22px;min-height:56px;display:flex;align-items:flex-end;font-size:13px;line-height:1.3;color:#8F9BB2;text-transform:uppercase;letter-spacing:0.12em;">Discards · target for the pilot</div>
@@ -376,7 +376,7 @@ input[type=range]{accent-color:#FF7A45;}
             <div style="height:8px;border-radius:4px;background:rgba(255,122,69,0.25);margin-top:10px;overflow:hidden;"><div style="height:100%;width:{{ youDiscardBar }};border-radius:4px;background:#3CE7FF;transition:width 1.4s cubic-bezier(.22,1,.36,1);"></div></div>
           </div>
           <div data-reveal="up" style="display:flex;flex-direction:column;padding:28px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.18);border-radius:24px;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);transition:transform .25s, box-shadow .25s;" style-hover="transform:translateY(-2px);box-shadow:0 0 40px rgba(60,231,255,0.18);">
-            <div aria-hidden="true" style="width:96px;height:96px;background-image:url(./assets/img0.jpg);background-size:495% auto;background-position:50.1% 50%;background-repeat:no-repeat;mix-blend-mode:screen;-webkit-mask-image:radial-gradient(circle,#000 45%,transparent 70%);mask-image:radial-gradient(circle,#000 45%,transparent 70%);"></div>
+            <div aria-hidden="true" style="width:96px;height:96px;background-image:url(./assets/img0.webp);background-size:495% auto;background-position:50.1% 50%;background-repeat:no-repeat;mix-blend-mode:screen;-webkit-mask-image:radial-gradient(circle,#000 45%,transparent 70%);mask-image:radial-gradient(circle,#000 45%,transparent 70%);"></div>
             <div style="font-family:'Space Grotesk',sans-serif;font-size:24px;font-weight:600;color:#F2F6FC;margin-top:8px;">Program / Project</div>
             <div style="font-size:15px;color:#C9D2E3;margin-top:6px;">Live task state, pass-rate and time forecasts, a decision record.</div>
             <div style="margin-top:auto;padding-top:22px;min-height:56px;display:flex;align-items:flex-end;font-size:13px;line-height:1.3;color:#8F9BB2;text-transform:uppercase;letter-spacing:0.12em;">QC rounds per task · target for the pilot</div>
@@ -384,7 +384,7 @@ input[type=range]{accent-color:#FF7A45;}
             <div style="height:8px;border-radius:4px;background:rgba(255,122,69,0.25);margin-top:10px;overflow:hidden;"><div style="height:100%;width:{{ youQcBar }};border-radius:4px;background:#3CE7FF;transition:width 1.4s cubic-bezier(.22,1,.36,1);"></div></div>
           </div>
           <div data-reveal="up" style="display:flex;flex-direction:column;padding:28px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.18);border-radius:24px;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);transition:transform .25s, box-shadow .25s;" style-hover="transform:translateY(-2px);box-shadow:0 0 40px rgba(139,124,255,0.22);">
-            <div aria-hidden="true" style="width:96px;height:96px;background-image:url(./assets/img0.jpg);background-size:495% auto;background-position:84.2% 50%;background-repeat:no-repeat;mix-blend-mode:screen;-webkit-mask-image:radial-gradient(circle,#000 45%,transparent 70%);mask-image:radial-gradient(circle,#000 45%,transparent 70%);"></div>
+            <div aria-hidden="true" style="width:96px;height:96px;background-image:url(./assets/img0.webp);background-size:495% auto;background-position:84.2% 50%;background-repeat:no-repeat;mix-blend-mode:screen;-webkit-mask-image:radial-gradient(circle,#000 45%,transparent 70%);mask-image:radial-gradient(circle,#000 45%,transparent 70%);"></div>
             <div style="font-family:'Space Grotesk',sans-serif;font-size:24px;font-weight:600;color:#F2F6FC;margin-top:8px;">Pod lead</div>
             <div style="font-size:15px;color:#C9D2E3;margin-top:6px;">Onboarding in days, one standard, knowledge that stays.</div>
             <div style="margin-top:auto;padding-top:22px;min-height:56px;display:flex;align-items:flex-end;font-size:13px;line-height:1.3;color:#8F9BB2;text-transform:uppercase;letter-spacing:0.12em;">Onboarding · target for the pilot</div>
@@ -392,7 +392,7 @@ input[type=range]{accent-color:#FF7A45;}
             <div style="height:8px;border-radius:4px;background:rgba(255,122,69,0.25);margin-top:10px;overflow:hidden;"><div style="height:100%;width:{{ youOnboardBar }};border-radius:4px;background:#8B7CFF;transition:width 1.4s cubic-bezier(.22,1,.36,1);"></div></div>
           </div>
           <div data-reveal="up" style="display:flex;flex-direction:column;padding:28px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.18);border-radius:24px;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);transition:transform .25s, box-shadow .25s;" style-hover="transform:translateY(-2px);box-shadow:0 0 40px rgba(60,231,255,0.18);">
-            <div aria-hidden="true" style="width:96px;height:96px;background-image:url(./assets/img8.jpg);background-size:415% auto;background-position:95% 49%;background-repeat:no-repeat;mix-blend-mode:screen;filter:contrast(1.7) brightness(0.8);-webkit-mask-image:radial-gradient(circle,#000 40%,transparent 58%);mask-image:radial-gradient(circle,#000 40%,transparent 58%);"></div>
+            <div aria-hidden="true" style="width:96px;height:96px;background-image:url(./assets/img8.webp);background-size:415% auto;background-position:95% 49%;background-repeat:no-repeat;mix-blend-mode:screen;filter:contrast(1.7) brightness(0.8);-webkit-mask-image:radial-gradient(circle,#000 40%,transparent 58%);mask-image:radial-gradient(circle,#000 40%,transparent 58%);"></div>
             <div style="font-family:'Space Grotesk',sans-serif;font-size:24px;font-weight:600;color:#F2F6FC;margin-top:8px;">Trainer</div>
             <div style="font-size:15px;color:#C9D2E3;margin-top:6px;">The next step always named, no lost batteries, QC issues caught before upload.</div>
             <div style="margin-top:auto;padding-top:22px;min-height:56px;display:flex;align-items:flex-end;font-size:13px;line-height:1.3;color:#8F9BB2;text-transform:uppercase;letter-spacing:0.12em;">Re-run after a dead container</div>
@@ -417,7 +417,7 @@ input[type=range]{accent-color:#FF7A45;}
         <div style="display:flex;justify-content:center;margin-top:36px;">
           <a href="mailto:hesham.f1@turing.com?subject=podkit%20v2%20pilot" style="font-family:'Space Grotesk',sans-serif;font-size:19px;font-weight:600;padding:18px 34px;border-radius:999px;background:#3CE7FF;color:#070B14;box-shadow:0 0 40px rgba(60,231,255,0.45);transition:transform .2s, box-shadow .2s;" style-hover="transform:translateY(-2px);box-shadow:0 0 64px rgba(60,231,255,0.7);color:#070B14;">Start the pilot</a>
         </div>
-        <div style="margin-top:24px;display:flex;justify-content:center;align-items:center;gap:14px;font-size:15px;color:#AEB9CC;"><img src="./assets/hesham.jpg" alt="Hesham Aboul-Fetouh" style="width:48px;height:48px;border-radius:50%;object-fit:cover;object-position:60% 35%;border:1px solid rgba(255,255,255,0.3);"><span style="display:flex;flex-direction:column;align-items:flex-start;gap:2px;"><span style="font-family:'Space Grotesk',sans-serif;font-size:17px;font-weight:600;color:#F2F6FC;">Hesham Aboul-Fetouh</span><a href="mailto:hesham.f1@turing.com">hesham.f1@turing.com</a></span></div>
+        <div style="margin-top:24px;display:flex;justify-content:center;align-items:center;gap:14px;font-size:15px;color:#AEB9CC;"><img src="./assets/hesham.webp" alt="Hesham Aboul-Fetouh" style="width:48px;height:48px;border-radius:50%;object-fit:cover;object-position:60% 35%;border:1px solid rgba(255,255,255,0.3);"><span style="display:flex;flex-direction:column;align-items:flex-start;gap:2px;"><span style="font-family:'Space Grotesk',sans-serif;font-size:17px;font-weight:600;color:#F2F6FC;">Hesham Aboul-Fetouh</span><a href="mailto:hesham.f1@turing.com">hesham.f1@turing.com</a></span></div>
       </div>
     </section>
 
