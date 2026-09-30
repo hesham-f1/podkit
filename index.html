@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<title>podkit - watch a task get unstuck</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&amp;family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<script type="application/json" id="podkit-data">{
+  "snapshots": [
+    {"date": "17 Sep", "day": 0,  "discarded": 35,  "never": 65},
+    {"date": "18 Sep", "day": 1,  "discarded": 59,  "never": 45},
+    {"date": "21 Sep", "day": 4,  "discarded": 80,  "never": 47},
+    {"date": "27 Sep", "day": 10, "discarded": 322, "never": 9},
+    {"date": "30 Sep", "day": 13, "discarded": 243, "never": 141}
+  ],
+  "trainersDiscarding": 0,
+  "tasksMultiDiscarded": 0,
+  "scopeHours": 8,
+  "tasks": [
+    {"name": "Task A", "hours": 8.5, "batteries": 8,  "oracle": 6,  "days": 4},
+    {"name": "Task B", "hours": 56,  "batteries": 25, "oracle": 45, "days": 8, "qc": 7},
+    {"name": "Task C", "hours": 11,  "batteries": 8,  "oracle": 10, "days": 3},
+    {"name": "Task D", "hours": 20,  "batteries": 2,  "oracle": 14, "days": 3}
+  ],
+  "v2": {"tools": 103, "skills": 6, "commits": 141, "days": 12, "qcCriteria": 59, "kbTasks": 104, "kbTraps": 546},
+  "pilotTargets": {"discardsDownPct": 50, "qcRoundsFrom": 7, "qcRoundsTo": 2, "onboardingDays": 3}
+}</script>
+<style>
+html,body{margin:0;background:#070B14;}
+body{font-family:Inter,system-ui,sans-serif;-webkit-font-smoothing:antialiased;color:#E8EEF8;}
+a{color:#3CE7FF;text-decoration:none;}
+a:hover{color:#9AF3FF;}
+*{box-sizing:border-box;}
+input[type=range]{accent-color:#FF7A45;}
+</style>
+</helmet>
+
+<div ref="{{ rootRef }}" style="position:relative;background:#070B14;color:#E8EEF8;font-family:Inter,sans-serif;overflow-x:clip;">
+
+  <div aria-hidden="true" style="position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none;">
+    <img src="./assets/img7.jpg" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0.28;">
+    <div ref="{{ blob1 }}" style="position:absolute;left:-10%;top:-10%;width:60vw;height:60vw;border-radius:50%;background:radial-gradient(circle,rgba(60,231,255,0.16) 0%,rgba(60,231,255,0) 65%);"></div>
+    <div ref="{{ blob2 }}" style="position:absolute;right:-15%;top:20%;width:55vw;height:55vw;border-radius:50%;background:radial-gradient(circle,rgba(139,124,255,0.18) 0%,rgba(139,124,255,0) 65%);"></div>
+    <div ref="{{ blob3 }}" style="position:absolute;left:20%;bottom:-25%;width:50vw;height:50vw;border-radius:50%;background:radial-gradient(circle,rgba(255,122,69,0.12) 0%,rgba(255,122,69,0) 65%);"></div>
+    <div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(7,11,20,0.35) 0%,rgba(7,11,20,0.75) 100%);"></div>
+  </div>
+
+  <header style="position:fixed;top:0;left:0;right:0;z-index:20;display:flex;justify-content:space-between;align-items:center;gap:16px;padding:16px clamp(16px,4vw,40px);background:rgba(7,11,20,0.55);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:1px solid rgba(255,255,255,0.08);">
+    <a href="#top" style="display:flex;align-items:center;gap:10px;font-family:'Space Grotesk',sans-serif;font-size:22px;font-weight:600;color:#F2F6FC;letter-spacing:-0.02em;">
+      <span style="width:28px;height:28px;background-image:url(./assets/img8.jpg);background-size:415% auto;background-position:95% 49%;background-color:#0b1220;border-radius:50%;filter:contrast(1.6) brightness(0.85);"></span>
+      <span>podkit</span>
+    </a>
+    <nav style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;font-size:14px;">
+      <a href="#pool" style="padding:8px 12px;border-radius:999px;color:#C9D2E3;" style-hover="background:rgba(255,255,255,0.08);color:#F2F6FC;">Problem</a>
+      <a href="#sim" style="padding:8px 12px;border-radius:999px;color:#C9D2E3;" style-hover="background:rgba(255,255,255,0.08);color:#F2F6FC;">Simulation</a>
+      <a href="#vision" style="padding:8px 12px;border-radius:999px;color:#C9D2E3;" style-hover="background:rgba(255,255,255,0.08);color:#F2F6FC;">Vision</a>
+      <a href="#ask" style="padding:8px 14px;border-radius:999px;color:#070B14;background:#3CE7FF;font-weight:600;" style-hover="box-shadow:0 0 24px rgba(60,231,255,0.6);transform:translateY(-2px);">The pilot</a>
+    </nav>
+  </header>
+
+  <main style="position:relative;z-index:1;">
+
+    <section id="top" aria-label="Introduction" style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:120px 24px 80px;">
+      
+    <div style="max-width:1200px;width:100%;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:48px;align-items:center;">
+        <div style="position:relative;width:min(100%,480px);aspect-ratio:1;margin:0 auto;">
+          <div role="img" aria-label="podkit glass hexagon mark" style="position:absolute;inset:0;background-image:url(./assets/img8.jpg);background-size:415% auto;background-position:95% 49%;background-repeat:no-repeat;mix-blend-mode:screen;filter:contrast(1.7) brightness(0.8);-webkit-mask-image:radial-gradient(circle,#000 40%,transparent 58%);mask-image:radial-gradient(circle,#000 40%,transparent 58%);transition:opacity 1.2s ease, transform 1.2s cubic-bezier(.16,1,.3,1);opacity:{{ heroHexOpacity }};transform:{{ heroHexTransform }};"></div>
+          <canvas ref="{{ heroRef }}" width="560" height="560" aria-hidden="true" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;"></canvas>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:24px;">
+          <div data-reveal="up" style="font-family:'Space Grotesk',sans-serif;font-size:14px;letter-spacing:0.16em;text-transform:uppercase;color:#3CE7FF;">An interactive simulation · 30 Sep 2026</div>
+          <h1 data-reveal="up" style="font-family:'Space Grotesk',sans-serif;font-size:clamp(40px,6vw,76px);font-weight:600;line-height:1.02;letter-spacing:-0.03em;margin:0;color:#F2F6FC;text-wrap:balance;">
+            <span style="color: rgb(255, 122, 69); font-variant-numeric: tabular-nums;">Tasks</span>
+            <span>get stuck in the pool, <br>see how&nbsp;</span><span style="color: rgb(255, 122, 69); font-variant-numeric: tabular-nums;">podkit<br></span><span style="">can moves them.</span>
+          </h1>
+          <p data-reveal="up" style="font-size:19px;line-height:1.55;color:#B9C4D8;margin:0;max-width:540px;text-wrap:pretty;">Scroll through the pool as it grew, watch four tasks outrun their 8-hour scope, then run one task through podkit v2 and see it come out the other side as a submitted package.</p>
+          <div data-reveal="up" style="display:flex;gap:16px;flex-wrap:wrap;align-items:center;">
+            <button ref="{{ ctaRef }}" onClick="{{ startSim }}" style="font-family:'Space Grotesk',sans-serif;font-size:18px;font-weight:600;padding:16px 28px;border-radius:999px;border:1px solid rgba(60,231,255,0.6);background:rgba(60,231,255,0.14);color:#F2F6FC;cursor:pointer;transition:transform .2s, box-shadow .2s;" style-hover="transform:translateY(-2px);box-shadow:0 0 32px rgba(60,231,255,0.55);">Start the simulation</button>
+            <span style="font-size:15px;color:#8F9BB2;">About 3 minutes · no sign-in</span>
+          </div>
+        </div>
+      </div></section>
+
+    <div id="pool" ref="{{ poolRef }}" style="position:relative;">
+      <section ref="{{ poolSecRef }}" aria-label="The pool over time" style="position:sticky;top:0;min-height:100vh;display:flex;align-items:center;padding:96px 24px 40px;">
+        <div style="max-width:1200px;width:100%;margin:0 auto;">
+          <div style="font-family:'Space Grotesk',sans-serif;font-size:14px;letter-spacing:0.16em;text-transform:uppercase;color:#FF7A45;">01 · The problem</div>
+          <h2 style="font-family:'Space Grotesk',sans-serif;font-size:clamp(32px,4.4vw,56px);font-weight:600;letter-spacing:-0.02em;line-height:1.05;margin:12px 0 28px;color:#F2F6FC;">The pool, over time</h2>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));gap:24px;align-items:stretch;">
+            <div style="grid-column:span 2;min-width:0;padding:24px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.18);border-radius:24px;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);box-shadow:0 0 40px rgba(255,122,69,0.08),inset 0 1px 0 rgba(255,255,255,0.12);">
+              <div style="display:flex;flex-wrap:wrap;gap:24px 40px;align-items:baseline;font-variant-numeric:tabular-nums;">
+                <div style="display:flex;flex-direction:column;gap:2px;"><span style="font-size:13px;color:#8F9BB2;text-transform:uppercase;letter-spacing:0.12em;">Snapshot</span><span style="font-family:'Space Grotesk',sans-serif;font-size:28px;font-weight:600;color:#F2F6FC;">{{ poolDate }}</span></div>
+                <div style="display:flex;flex-direction:column;gap:2px;"><span style="font-size:13px;color:#8F9BB2;text-transform:uppercase;letter-spacing:0.12em;">Pool size (17 Sep = 100)</span><span style="font-family:'Space Grotesk',sans-serif;font-size:44px;font-weight:600;line-height:1;color:#FF7A45;text-shadow:0 0 30px rgba(255,122,69,0.4);">{{ poolTotal }}</span></div>
+                <div style="display:flex;flex-direction:column;gap:2px;"><span style="font-size:13px;color:#8F9BB2;text-transform:uppercase;letter-spacing:0.12em;">Discarded (same index)</span><span style="font-family:'Space Grotesk',sans-serif;font-size:28px;font-weight:600;color:#FFB08F;">{{ poolDisc }}</span></div>
+                <div style="display:flex;flex-direction:column;gap:2px;"><span style="font-size:13px;color:#8F9BB2;text-transform:uppercase;letter-spacing:0.12em;">Never claimed</span><span style="font-family:'Space Grotesk',sans-serif;font-size:28px;font-weight:600;color:#A7B0C2;">{{ poolNever }}</span></div>
+              </div>
+              <svg viewBox="0 0 800 370" width="100%" role="img" aria-label="Stacked area chart of the task pool across five snapshots, indexed to 17 Sep = 100: 17 Sep 100 (35 discarded, 65 never claimed); 18 Sep 104 (59 discarded, 45 never claimed); 21 Sep 127 (80 discarded, 47 never claimed); 27 Sep 331 (322 discarded, 9 never claimed); 30 Sep 384 (243 discarded, 141 never claimed)." style="display:block;margin-top:16px;overflow:visible;font-family:Inter,sans-serif;">
+                <defs>
+                  <clipPath id="poolClip"><rect x="0" y="0" height="370" width="{{ poolClipW }}"></rect></clipPath>
+                  <linearGradient id="gEmber" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FF7A45" stop-opacity="0.85"></stop><stop offset="1" stop-color="#FF7A45" stop-opacity="0.25"></stop></linearGradient>
+                  <linearGradient id="gGrey" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#A7B0C2" stop-opacity="0.5"></stop><stop offset="1" stop-color="#A7B0C2" stop-opacity="0.12"></stop></linearGradient>
+                </defs>
+                <g stroke="rgba(255,255,255,0.08)">
+                  <line x1="40" x2="780" y1="261.1" y2="261.1"></line><line x1="40" x2="780" y1="192.2" y2="192.2"></line><line x1="40" x2="780" y1="123.3" y2="123.3"></line><line x1="40" x2="780" y1="54.4" y2="54.4"></line>
+                  <line x1="40" x2="780" y1="330" y2="330" stroke="rgba(255,255,255,0.25)"></line>
+                </g>
+                <g fill="#8F9BB2" font-size="13" text-anchor="end"><text x="32" y="265">100</text><text x="32" y="196">200</text><text x="32" y="127">300</text><text x="32" y="58">400</text></g>
+                <g clip-path="url(#poolClip)">
+                  <path d="{{ nevArea }}" fill="url(#gGrey)"></path>
+                  <path d="{{ discArea }}" fill="url(#gEmber)"></path>
+                  <path d="{{ totalLine }}" fill="none" stroke="#FF7A45" stroke-width="3" stroke-linejoin="round" style="filter:drop-shadow(0 0 8px rgba(255,122,69,0.6));"></path>
+                </g>
+                <line x1="{{ poolCursorX }}" x2="{{ poolCursorX }}" y1="20" y2="330" stroke="rgba(255,255,255,0.6)" stroke-dasharray="4 4"></line>
+                <circle cx="{{ poolCursorX }}" cy="{{ poolCursorY }}" r="7" fill="#FF7A45" stroke="#070B14" stroke-width="3"></circle>
+                <g fill="#A7B0C2" font-size="13" text-anchor="middle">
+                  <sc-for list="{{ snapLabels }}" as="s" hint-placeholder-count="5"><text x="{{ s.x }}" y="354">{{ s.label }}</text></sc-for>
+                </g>
+              </svg>
+              <label style="display:flex;flex-direction:column;gap:10px;margin-top:8px;">
+                <span style="font-size:13px;color:#8F9BB2;">Drag through time, or keep scrolling</span>
+                <input type="range" min="0" max="4" step="0.01" value="{{ poolT }}" onChange="{{ onScrub }}" aria-label="Snapshot timeline" style="width:100%;">
+              </label>
+              <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;">
+                <sc-for list="{{ snapLabels }}" as="s" hint-placeholder-count="5">
+                  <button onClick="{{ s.onClick }}" style="font-size:13px;padding:6px 12px;border-radius:999px;cursor:pointer;border:1px solid {{ s.border }};background:{{ s.bg }};color:#E8EEF8;font-variant-numeric:tabular-nums;transition:transform .2s;" style-hover="transform:translateY(-2px);">{{ s.full }}</button>
+                </sc-for>
+              </div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:16px;min-width:0;">
+              <div style="padding:20px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.18);border-radius:24px;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);">
+                <div style="display:flex;justify-content:space-between;font-size:13px;color:#8F9BB2;margin-bottom:12px;"><span>The pile · 1 card ≈ 5 index points</span><span style="display:flex;gap:10px;"><span style="color:#FF7A45;">■ discarded</span><span style="color:#A7B0C2;">■ never claimed</span></span></div>
+                <div style="display:grid;grid-template-columns:repeat(14,1fr);gap:4px;height:190px;align-content:end;overflow:hidden;">
+                  <sc-for list="{{ poolCards }}" as="c" hint-placeholder-count="20">
+                    <div style="aspect-ratio:3/4;border-radius:3px;background:{{ c.bg }};box-shadow:{{ c.glow }};transition:background .4s;"></div>
+                  </sc-for>
+                </div>
+              </div>
+              <div style="padding:20px 24px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.18);border-radius:24px;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);">
+                <div data-count="9" style="font-family:'Space Grotesk',sans-serif;font-size:48px;font-weight:600;line-height:1;color:#FF7A45;font-variant-numeric:tabular-nums;">9&times;</div>
+                <div style="font-size:16px;color:#C9D2E3;margin-top:6px;">more discarded tasks at the 27 Sep peak than on 17 Sep</div>
+              </div>
+              <div style="padding:20px 24px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.18);border-radius:24px;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);">
+                <div data-count="3" style="font-family:'Space Grotesk',sans-serif;font-size:48px;font-weight:600;line-height:1;color:#FF7A45;font-variant-numeric:tabular-nums;">2&ndash;3</div>
+                <div style="font-size:16px;color:#C9D2E3;margin-top:6px;">trainers in turn picked up and dropped the same task</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+      <div aria-hidden="true" style="height:100vh;"></div>
+    </div>
+
+    <section aria-label="8 hours versus reality" style="padding:120px 24px;">
+      <div data-seen="race" style="max-width:1200px;margin:0 auto;">
+        <div data-reveal="up" style="font-family:'Space Grotesk',sans-serif;font-size:14px;letter-spacing:0.16em;text-transform:uppercase;color:#FF7A45;">02 · The problem</div>
+        <h2 data-reveal="up" style="font-family:'Space Grotesk',sans-serif;font-size:clamp(32px,4.4vw,56px);font-weight:600;letter-spacing:-0.02em;line-height:1.05;margin:12px 0 12px;color:#F2F6FC;">8 hours vs reality</h2>
+        <p data-reveal="up" style="font-size:18px;color:#B9C4D8;margin:0 0 32px;max-width:640px;">Machine run-time alone, before any human work. Hover or tap a lane for its history.</p>
+        <div data-reveal="up" role="img" aria-label="Race track of machine run-time against the 8-hour scope: Task A 1.1x, Task B 7x, Task C 1.4x, Task D 2.5x the scope." style="padding:28px clamp(16px,3vw,36px);background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.18);border-radius:24px;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);box-shadow:0 0 40px rgba(255,122,69,0.06),inset 0 1px 0 rgba(255,255,255,0.12);">
+          <div style="display:grid;grid-template-columns:72px 1fr;gap:12px;margin-bottom:6px;"><span></span><div style="position:relative;height:20px;"><span style="position:absolute;left:13.33%;transform:translateX(-50%);font-size:13px;color:#3CE7FF;white-space:nowrap;font-family:'Space Grotesk',sans-serif;">8 h scope</span></div></div>
+          <div style="display:flex;flex-direction:column;gap:14px;">
+            <sc-for list="{{ lanes }}" as="l" hint-placeholder-count="4">
+              <div onMouseEnter="{{ l.onEnter }}" onClick="{{ l.onEnter }}" style="display:grid;grid-template-columns:72px 1fr;gap:12px;align-items:center;cursor:pointer;">
+                <span style="font-family:'Space Grotesk',sans-serif;font-size:17px;font-weight:600;color:{{ l.labelColor }};">{{ l.name }}</span>
+                <div style="position:relative;height:46px;border-radius:12px;background:rgba(255,255,255,0.05);border:1px solid {{ l.border }};transition:border-color .2s;">
+                  <div style="position:absolute;left:13.33%;top:-8px;bottom:-8px;border-left:2px dashed rgba(60,231,255,0.75);z-index:2;"></div>
+                  <div style="position:absolute;left:0;top:0;bottom:0;width:{{ l.width }};border-radius:12px;background:linear-gradient(90deg,rgba(184,67,29,0.9),#FF7A45);box-shadow:0 0 24px rgba(255,122,69,0.4);transition:width {{ l.dur }} cubic-bezier(.22,1,.36,1);">
+                    <span style="position:absolute;right:-7px;top:50%;width:14px;height:14px;margin-top:-7px;border-radius:50%;background:#FFE0D2;box-shadow:0 0 16px #FF7A45;"></span>
+                  </div>
+                  <span style="position:absolute;left:{{ l.labelLeft }};top:50%;transform:translateY(-50%);padding-left:16px;font-family:'Space Grotesk',sans-serif;font-size:17px;font-weight:600;color:#FFD2BF;font-variant-numeric:tabular-nums;white-space:nowrap;transition:left {{ l.dur }} cubic-bezier(.22,1,.36,1);">{{ l.hLabel }}</span>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+          <div style="margin-top:24px;display:flex;flex-wrap:wrap;gap:12px 28px;padding:16px 20px;border-radius:16px;background:rgba(7,11,20,0.45);border:1px solid rgba(255,255,255,0.1);font-variant-numeric:tabular-nums;font-size:15px;color:#C9D2E3;">
+            <span style="font-family:'Space Grotesk',sans-serif;font-weight:600;color:#F2F6FC;">{{ laneDetail.name }}</span>
+            <span><b style="color:#FF7A45;">{{ laneDetail.hours }}</b> machine time</span>
+            <span><b style="color:#F2F6FC;">{{ laneDetail.batteries }}</b> batteries</span>
+            <span><b style="color:#F2F6FC;">{{ laneDetail.oracle }}</b> oracle runs</span>
+            <span><b style="color:#F2F6FC;">{{ laneDetail.days }}</b> calendar days</span>
+            <sc-if value="{{ laneDetail.hasQc }}" hint-placeholder-val="{{ false }}"><span><b style="color:#FF7A45;">{{ laneDetail.qc }}</b> QC rounds</span></sc-if>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section aria-label="Why tasks get dropped" style="padding:120px 24px;">
+      <div style="max-width:1200px;margin:0 auto;">
+        <div data-reveal="up" style="font-family:'Space Grotesk',sans-serif;font-size:14px;letter-spacing:0.16em;text-transform:uppercase;color:#FF7A45;">03 · The problem</div>
+        <h2 data-reveal="up" style="font-family:'Space Grotesk',sans-serif;font-size:clamp(32px,4.4vw,56px);font-weight:600;letter-spacing:-0.02em;line-height:1.05;margin:12px 0 32px;color:#F2F6FC;">Why tasks get dropped</h2>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:20px;perspective:1200px;">
+          <sc-for list="{{ tiles }}" as="t" hint-placeholder-count="6">
+            <div data-reveal="flip" onMouseEnter="{{ t.onEnter }}" onMouseLeave="{{ t.onLeave }}" onClick="{{ t.onEnter }}" style="display:flex;gap:18px;align-items:center;padding:20px 22px;min-height:150px;cursor:default;background:rgba(255,255,255,0.08);border:1px solid {{ t.border }};border-radius:24px;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);box-shadow:{{ t.glow }};transform:{{ t.lift }};transition:transform .25s, box-shadow .25s, border-color .25s;">
+              <div aria-hidden="true" style="flex:none;width:110px;height:90px;background-image:url(./assets/img5.jpg);background-size:320% 213%;background-position:{{ t.pos }};mix-blend-mode:screen;"></div>
+              <div style="display:flex;flex-direction:column;gap:6px;min-width:0;">
+                <span style="font-family:'Space Grotesk',sans-serif;font-size:19px;font-weight:600;color:#F2F6FC;line-height:1.2;">{{ t.title }}</span>
+                <span style="font-size:15px;line-height:1.45;color:{{ t.textColor }};">{{ t.text }}</span>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+        <p style="font-size:13px;color:#8F9BB2;margin:16px 0 0;">Examples are anonymised; no trainer names are shown.</p>
+      </div>
+    </section>
+
+    <section id="sim" aria-label="The simulation" style="padding:120px 24px;">
+      <div data-seen="sim" style="max-width:1200px;margin:0 auto;">
+        <div data-reveal="up" style="font-family:'Space Grotesk',sans-serif;font-size:14px;letter-spacing:0.16em;text-transform:uppercase;color:#3CE7FF;">04 · The simulation</div>
+        <h2 data-reveal="up" style="font-family:'Space Grotesk',sans-serif;font-size:clamp(32px,4.4vw,56px);font-weight:600;letter-spacing:-0.02em;line-height:1.05;margin:12px 0 12px;color:#F2F6FC;">One task, through podkit v2</h2>
+        <p data-reveal="up" style="font-size:18px;color:#B9C4D8;margin:0 0 28px;max-width:680px;">Same task, same trainer. Flip the switch to compare what happens without podkit and with it.</p>
+        <div data-reveal="up" style="padding:clamp(16px,3vw,32px);background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.18);border-radius:24px;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);box-shadow:0 0 60px rgba(60,231,255,0.08),inset 0 1px 0 rgba(255,255,255,0.12);">
+          <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:16px;">
+            <div role="group" aria-label="Compare modes" style="display:flex;padding:4px;border-radius:999px;background:rgba(7,11,20,0.6);border:1px solid rgba(255,255,255,0.14);">
+              <button onClick="{{ setWithout }}" aria-pressed="{{ isWithout }}" style="font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:600;padding:10px 18px;border-radius:999px;border:none;cursor:pointer;background:{{ withoutBg }};color:{{ withoutColor }};transition:background .25s;">Without podkit</button>
+              <button onClick="{{ setWith }}" aria-pressed="{{ isWith }}" style="font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:600;padding:10px 18px;border-radius:999px;border:none;cursor:pointer;background:{{ withBg }};color:{{ withColor }};transition:background .25s;">With podkit v2</button>
+            </div>
+            <div style="display:flex;gap:20px;align-items:center;font-variant-numeric:tabular-nums;font-size:14px;color:#C9D2E3;">
+              <span>Discard pile <b style="font-family:'Space Grotesk',sans-serif;font-size:20px;color:#FF7A45;">{{ discardPile }}</b></span>
+              <span>Submitted <b style="font-family:'Space Grotesk',sans-serif;font-size:20px;color:#3CE7FF;">{{ submitted }}</b></span>
+              <button onClick="{{ replay }}" style="font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:600;padding:10px 18px;border-radius:999px;border:1px solid rgba(60,231,255,0.5);background:rgba(60,231,255,0.12);color:#F2F6FC;cursor:pointer;transition:transform .2s, box-shadow .2s;" style-hover="transform:translateY(-2px);box-shadow:0 0 24px rgba(60,231,255,0.45);">{{ playLabel }}</button>
+            </div>
+          </div>
+
+          <div style="position:relative;margin:36px 0 8px;height:64px;">
+            <div style="position:absolute;left:4%;right:4%;top:31px;height:2px;background:{{ trackBg }};"></div>
+            <div style="position:absolute;left:4%;right:4%;top:0;bottom:0;">
+              <div style="position:absolute;top:14px;left:{{ cardLeft }};width:28px;height:36px;margin-left:-14px;border-radius:6px;background:{{ cardBg }};box-shadow:{{ cardGlow }};transition:left .7s cubic-bezier(.16,1,.3,1), background .4s;"></div>
+            </div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,160px),1fr));gap:12px;">
+            <sc-for list="{{ stations }}" as="s" hint-placeholder-count="6">
+              <div style="padding:14px;border-radius:18px;background:{{ s.bg }};border:1px {{ s.borderStyle }} {{ s.border }};opacity:{{ s.opacity }};box-shadow:{{ s.glow }};transition:all .4s;min-height:150px;display:flex;flex-direction:column;gap:8px;">
+                <div aria-hidden="true" style="width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:600;color:{{ s.statusColor }};border:1px solid {{ s.border }};background:rgba(7,11,20,0.6);">{{ s.num }}</div>
+                <span style="font-family:'Space Grotesk',sans-serif;font-size:16px;font-weight:600;color:#F2F6FC;">{{ s.name }}</span>
+                <span style="font-family:'JetBrains Mono',monospace;font-size:12px;line-height:1.45;color:{{ s.statusColor }};">{{ s.status }}</span>
+              </div>
+            </sc-for>
+          </div>
+
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:16px;margin-top:16px;">
+            <div style="padding:16px 18px;border-radius:18px;background:rgba(4,7,14,0.85);border:1px solid rgba(255,255,255,0.12);font-family:'JetBrains Mono',monospace;font-size:13px;line-height:1.7;min-height:196px;">
+              <div style="display:flex;justify-content:space-between;color:#8F9BB2;margin-bottom:8px;"><span>live watcher</span><span style="color:{{ termDot }};">●</span></div>
+              <sc-for list="{{ termLines }}" as="ln" hint-placeholder-count="0"><div style="color:{{ ln.color }};">{{ ln.text }}</div></sc-for>
+            </div>
+            <div style="padding:16px 18px;border-radius:18px;background:rgba(4,7,14,0.6);border:1px solid rgba(255,255,255,0.12);">
+              <div style="display:flex;justify-content:space-between;font-family:'JetBrains Mono',monospace;font-size:13px;color:#8F9BB2;margin-bottom:12px;"><span>local QC · 59 criteria</span><span style="color:{{ qcLabelColor }};">{{ qcLabel }}</span></div>
+              <div role="img" aria-label="{{ qcLabel }}" style="display:grid;grid-template-columns:repeat(15,1fr);gap:6px;">
+                <sc-for list="{{ qcLights }}" as="q" hint-placeholder-count="59"><div style="aspect-ratio:1;border-radius:50%;background:{{ q.bg }};box-shadow:{{ q.glow }};transition:background .25s, box-shadow .25s;"></div></sc-for>
+              </div>
+              <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:14px;font-family:'JetBrains Mono',monospace;font-size:13px;">
+                <sc-for list="{{ pkgFiles }}" as="f" hint-placeholder-count="2"><span style="padding:6px 10px;border-radius:8px;border:1px solid {{ f.border }};color:{{ f.color }};transition:all .3s;">{{ f.text }}</span></sc-for>
+              </div>
+            </div>
+          </div>
+          <div aria-live="polite" style="margin-top:16px;font-family:'Space Grotesk',sans-serif;font-size:20px;font-weight:600;color:{{ resultColor }};min-height:28px;">{{ resultText }}</div>
+        </div>
+      </div>
+    </section>
+
+    <section aria-label="What is inside v2" style="padding:120px 24px;">
+      <div style="max-width:1200px;margin:0 auto;">
+        <div data-reveal="up" style="font-family:'Space Grotesk',sans-serif;font-size:14px;letter-spacing:0.16em;text-transform:uppercase;color:#3CE7FF;">05 · The solution</div>
+        <h2 data-reveal="up" style="font-family:'Space Grotesk',sans-serif;font-size:clamp(32px,4.4vw,56px);font-weight:600;letter-spacing:-0.02em;line-height:1.05;margin:12px 0 32px;color:#F2F6FC;">What's inside v2</h2>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:40px;align-items:center;">
+          <div data-reveal="up" style="position:relative;width:min(100%,560px);aspect-ratio:1130/1040;margin:0 auto;">
+            <div role="img" aria-label="podkit core: a glowing glass sphere with seven orbiting modules" style="position:absolute;inset:0;overflow:hidden;-webkit-mask-image:radial-gradient(ellipse 56% 56% at 50% 50%,#000 82%,transparent 100%);mask-image:radial-gradient(ellipse 56% 56% at 50% 50%,#000 82%,transparent 100%);">
+              <img src="./assets/img4.jpg" alt="" style="position:absolute;width:170.9%;height:auto;left:-35.4%;top:-5.77%;mix-blend-mode:screen;">
+            </div>
+            <button onMouseEnter="{{ coreEnter }}" onFocus="{{ coreEnter }}" onClick="{{ coreEnter }}" aria-label="One source of truth" style="position:absolute;left:50%;top:51.6%;width:28%;aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%;padding:0;cursor:pointer;background:transparent;border:2px solid {{ coreBorder }};box-shadow:{{ coreGlow }};transition:box-shadow .25s, border-color .25s;"></button>
+            <sc-for list="{{ nodes }}" as="n" hint-placeholder-count="7">
+              <button onMouseEnter="{{ n.onEnter }}" onFocus="{{ n.onEnter }}" onClick="{{ n.onEnter }}" aria-label="{{ n.name }}" style="position:absolute;left:{{ n.left }};top:{{ n.top }};transform:{{ n.transform }};width:15%;aspect-ratio:1;border-radius:50%;padding:0;cursor:pointer;background:transparent;border:2px solid {{ n.border }};box-shadow:{{ n.glow }};transition:transform .25s, box-shadow .25s, border-color .25s;"></button>
+            </sc-for>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:20px;">
+            <div data-reveal="up" style="padding:28px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.18);border-radius:24px;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);min-height:200px;">
+              <div style="font-size:13px;color:#8F9BB2;text-transform:uppercase;letter-spacing:0.14em;">Module</div>
+              <div style="font-family:'Space Grotesk',sans-serif;font-size:30px;font-weight:600;color:#3CE7FF;margin-top:8px;">{{ activeNode.name }}</div>
+              <p style="font-size:17px;line-height:1.55;color:#C9D2E3;margin:10px 0 0;text-wrap:pretty;">{{ activeNode.desc }}</p>
+            </div>
+            <div data-reveal="up" style="display:flex;flex-wrap:wrap;gap:12px 28px;padding:20px 24px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.14);border-radius:24px;font-variant-numeric:tabular-nums;">
+              <span style="display:flex;align-items:baseline;gap:8px;"><b data-count="103" style="font-family:'Space Grotesk',sans-serif;font-size:32px;color:#3CE7FF;">103</b><span style="color:#C9D2E3;">tools</span></span>
+              <span style="display:flex;align-items:baseline;gap:8px;"><b data-count="6" style="font-family:'Space Grotesk',sans-serif;font-size:32px;color:#3CE7FF;">6</b><span style="color:#C9D2E3;">skills</span></span>
+              <span style="display:flex;align-items:baseline;gap:8px;"><b data-count="141" style="font-family:'Space Grotesk',sans-serif;font-size:32px;color:#3CE7FF;">141</b><span style="color:#C9D2E3;">commits in 12 days</span></span>
+              <span style="flex-basis:100%;font-size:14px;color:#8F9BB2;">Under development: finalising and testing.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section aria-label="Before and after, per pain" style="padding:120px 24px;">
+      <div style="max-width:1200px;margin:0 auto;">
+        <div data-reveal="up" style="font-family:'Space Grotesk',sans-serif;font-size:14px;letter-spacing:0.16em;text-transform:uppercase;color:#3CE7FF;">06 · The solution</div>
+        <h2 data-reveal="up" style="font-family:'Space Grotesk',sans-serif;font-size:clamp(32px,4.4vw,56px);font-weight:600;letter-spacing:-0.02em;line-height:1.05;margin:12px 0 32px;color:#F2F6FC;">Before and after, per pain</h2>
+        <div data-reveal="up" style="padding:8px clamp(20px,3vw,36px);background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.18);border-radius:24px;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);box-shadow:inset 0 1px 0 rgba(255,255,255,0.14),0 24px 60px rgba(0,0,0,0.35);">
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));column-gap:24px;padding:22px 0;border-bottom:1px solid rgba(255,255,255,0.18);font-family:'Space Grotesk',sans-serif;font-size:14px;font-weight:500;letter-spacing:0.14em;text-transform:uppercase;">
+            <span style="color:#FF7A45;">Before</span>
+            <span style="color:#3CE7FF;padding-left:36px;">With podkit v2</span>
+          </div>
+          <div data-reveal="up" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));column-gap:24px;row-gap:6px;align-items:center;padding:20px 0;border-bottom:1px solid rgba(255,255,255,0.10);font-size:18px;line-height:1.35;">
+            <span style="color:#C9D2E3;">A dead container loses the whole battery</span>
+            <span style="display:flex;gap:16px;align-items:baseline;"><span aria-hidden="true" style="color:#3CE7FF;font-size:20px;">→</span><span style="color:#F2F6FC;font-weight:600;">Per-trial resume: only the failed trial re-runs</span></span>
+          </div>
+          <div data-reveal="up" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));column-gap:24px;row-gap:6px;align-items:center;padding:20px 0;border-bottom:1px solid rgba(255,255,255,0.10);font-size:18px;line-height:1.35;">
+            <span style="color:#C9D2E3;">QC findings arrive one per round</span>
+            <span style="display:flex;gap:16px;align-items:baseline;"><span aria-hidden="true" style="color:#3CE7FF;font-size:20px;">→</span><span style="color:#F2F6FC;font-weight:600;">Caught locally, before upload</span></span>
+          </div>
+          <div data-reveal="up" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));column-gap:24px;row-gap:6px;align-items:center;padding:20px 0;border-bottom:1px solid rgba(255,255,255,0.10);font-size:18px;line-height:1.35;">
+            <span style="color:#C9D2E3;">Docs written by hand</span>
+            <span style="display:flex;gap:16px;align-items:baseline;"><span aria-hidden="true" style="color:#3CE7FF;font-size:20px;">→</span><span style="color:#F2F6FC;font-weight:600;">Generated at the accepted bar</span></span>
+          </div>
+          <div data-reveal="up" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));column-gap:24px;row-gap:6px;align-items:center;padding:20px 0;border-bottom:1px solid rgba(255,255,255,0.10);font-size:18px;line-height:1.35;">
+            <span style="color:#C9D2E3;">Guesswork about what to do next</span>
+            <span style="display:flex;gap:16px;align-items:baseline;"><span aria-hidden="true" style="color:#3CE7FF;font-size:20px;">→</span><span style="color:#F2F6FC;font-weight:600;">A navigator that names the next step</span></span>
+          </div>
+          <div data-reveal="up" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));column-gap:24px;row-gap:6px;align-items:center;padding:20px 0;font-size:18px;line-height:1.35;">
+            <span style="color:#C9D2E3;">Tribal knowledge</span>
+            <span style="display:flex;gap:16px;align-items:baseline;"><span aria-hidden="true" style="color:#3CE7FF;font-size:20px;">→</span><span style="color:#F2F6FC;font-weight:600;">A knowledge base every agent loads</span></span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="vision" aria-label="The vision" style="padding:120px 24px;background:linear-gradient(180deg,rgba(139,124,255,0) 0%,rgba(139,124,255,0.10) 20%,rgba(139,124,255,0.10) 80%,rgba(139,124,255,0) 100%);">
+      <div data-seen="vision" style="max-width:1200px;margin:0 auto;">
+        <div data-reveal="up" style="font-family:'Space Grotesk',sans-serif;font-size:14px;letter-spacing:0.16em;text-transform:uppercase;color:#8B7CFF;">07 · The vision</div>
+        <h2 data-reveal="up" style="font-family:'Space Grotesk',sans-serif;font-size:clamp(32px,4.4vw,56px);font-weight:600;letter-spacing:-0.02em;line-height:1.05;margin:12px 0 32px;color:#F2F6FC;">podkit v3, a data engine</h2>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:40px;align-items:center;">
+          <div style="display:flex;flex-direction:column;gap:14px;">
+            <div data-reveal="left" style="display:flex;gap:18px;align-items:center;padding:22px 24px;background:rgba(139,124,255,0.12);border:1px solid rgba(190,180,255,0.3);border-radius:24px;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);box-shadow:0 0 40px rgba(139,124,255,0.15);">
+              <span style="font-family:'Space Grotesk',sans-serif;font-size:22px;font-weight:600;color:#8B7CFF;">01</span>
+              <span style="display:flex;flex-direction:column;gap:4px;"><b style="font-family:'Space Grotesk',sans-serif;font-size:19px;color:#F2F6FC;">Signal capture</b><span style="font-size:15px;color:#C9D2E3;">The run, failure and fix data trainers produce locally today, and lose.</span></span>
+            </div>
+            <div data-reveal="left" style="display:flex;gap:18px;align-items:center;padding:22px 24px;margin-left:clamp(0px,3vw,28px);background:rgba(139,124,255,0.10);border:1px solid rgba(190,180,255,0.26);border-radius:24px;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);box-shadow:0 0 40px rgba(139,124,255,0.12);">
+              <span style="font-family:'Space Grotesk',sans-serif;font-size:22px;font-weight:600;color:#8B7CFF;">02</span>
+              <span style="display:flex;flex-direction:column;gap:4px;"><b style="font-family:'Space Grotesk',sans-serif;font-size:19px;color:#F2F6FC;">Plug-and-play MCP layer</b><span style="font-size:15px;color:#C9D2E3;">Any agent adopts podkit instantly.</span></span>
+            </div>
+            <div data-reveal="left" style="display:flex;gap:18px;align-items:center;padding:22px 24px;margin-left:clamp(0px,6vw,56px);background:rgba(139,124,255,0.08);border:1px solid rgba(190,180,255,0.22);border-radius:24px;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);box-shadow:0 0 40px rgba(139,124,255,0.1);">
+              <span style="font-family:'Space Grotesk',sans-serif;font-size:22px;font-weight:600;color:#8B7CFF;">03</span>
+              <span style="display:flex;flex-direction:column;gap:4px;"><b style="font-family:'Space Grotesk',sans-serif;font-size:19px;color:#F2F6FC;">Notifications and issue reporting</b><span style="font-size:15px;color:#C9D2E3;">Problems surface to the right person as they happen.</span></span>
+            </div>
+            <div style="display:flex;align-items:baseline;gap:12px;margin-top:16px;font-variant-numeric:tabular-nums;">
+              
+              
+            </div>
+          </div>
+          <div style="position:relative;width:min(100%,520px);aspect-ratio:1;margin:0 auto;">
+            <img src="./assets/img1.jpg" alt="The data engine: stacked glass plates above glowing rings, streams of data flowing through." style="position:absolute;inset:8%;width:84%;height:84%;object-fit:cover;mix-blend-mode:screen;-webkit-mask-image:radial-gradient(circle,#000 55%,transparent 71%);mask-image:radial-gradient(circle,#000 55%,transparent 71%);filter:{{ engineFilter }};transition:filter .3s;">
+            <div style="position:absolute;inset:2%;border-radius:50%;border:1px solid rgba(190,180,255,{{ ringAlpha }});box-shadow:0 0 40px rgba(139,124,255,{{ ringAlpha }});"></div>
+            <span style="position:absolute;top:0;left:50%;transform:translate(-50%,-50%);padding:6px 14px;border-radius:999px;background:rgba(10,9,24,0.85);border:1px solid rgba(190,180,255,0.4);font-size:14px;color:#E4E0FF;opacity:{{ ringOpacity }};">prediction</span>
+            <span style="position:absolute;top:50%;right:0;transform:translate(40%,-50%);padding:6px 14px;border-radius:999px;background:rgba(10,9,24,0.85);border:1px solid rgba(190,180,255,0.4);font-size:14px;color:#E4E0FF;opacity:{{ ringOpacity }};">guidance</span>
+            <span style="position:absolute;bottom:0;left:50%;transform:translate(-50%,50%);padding:6px 14px;border-radius:999px;background:rgba(10,9,24,0.85);border:1px solid rgba(190,180,255,0.4);font-size:14px;color:#E4E0FF;opacity:{{ ringOpacity }};">analysis</span>
+            <span style="position:absolute;top:50%;left:0;transform:translate(-40%,-50%);padding:6px 14px;border-radius:999px;background:rgba(10,9,24,0.85);border:1px solid rgba(190,180,255,0.4);font-size:14px;color:#E4E0FF;opacity:{{ ringOpacity }};">management</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section aria-label="For you" style="padding:120px 24px;">
+      <div data-seen="you" style="max-width:1200px;margin:0 auto;">
+        <div data-reveal="up" style="font-family:'Space Grotesk',sans-serif;font-size:14px;letter-spacing:0.16em;text-transform:uppercase;color:#3CE7FF;">08 · For you</div>
+        <h2 data-reveal="up" style="font-family:'Space Grotesk',sans-serif;font-size:clamp(32px,4.4vw,56px);font-weight:600;letter-spacing:-0.02em;line-height:1.05;margin:12px 0 32px;color:#F2F6FC;">What each one gets</h2>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(max(calc(25% - 15px),min(calc(50% - 10px),calc((860px - 100%) * 999)),min(100%,calc((540px - 100%) * 999))),1fr));gap:20px;">
+          <div data-reveal="up" style="display:flex;flex-direction:column;padding:28px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.18);border-radius:24px;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);transition:transform .25s, box-shadow .25s;" style-hover="transform:translateY(-2px);box-shadow:0 0 40px rgba(60,231,255,0.18);">
+            <div aria-hidden="true" style="width:96px;height:96px;background-image:url(./assets/img0.jpg);background-size:495% auto;background-position:15.5% 51%;background-repeat:no-repeat;mix-blend-mode:screen;-webkit-mask-image:radial-gradient(circle,#000 45%,transparent 70%);mask-image:radial-gradient(circle,#000 45%,transparent 70%);"></div>
+            <div style="font-family:'Space Grotesk',sans-serif;font-size:24px;font-weight:600;color:#F2F6FC;margin-top:8px;">Delivery</div>
+            <div style="font-size:15px;color:#C9D2E3;margin-top:6px;">Fewer discards, predictable throughput.</div>
+            <div style="margin-top:auto;padding-top:22px;min-height:56px;display:flex;align-items:flex-end;font-size:13px;line-height:1.3;color:#8F9BB2;text-transform:uppercase;letter-spacing:0.12em;">Discards · target for the pilot</div>
+            <div style="display:flex;align-items:baseline;gap:8px;margin-top:6px;font-variant-numeric:tabular-nums;"><span style="font-family:'Space Grotesk',sans-serif;font-size:44px;font-weight:600;color:#3CE7FF;">−{{ youDiscards }}%</span></div>
+            <div style="height:8px;border-radius:4px;background:rgba(255,122,69,0.25);margin-top:10px;overflow:hidden;"><div style="height:100%;width:{{ youDiscardBar }};border-radius:4px;background:#3CE7FF;transition:width 1.4s cubic-bezier(.22,1,.36,1);"></div></div>
+          </div>
+          <div data-reveal="up" style="display:flex;flex-direction:column;padding:28px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.18);border-radius:24px;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);transition:transform .25s, box-shadow .25s;" style-hover="transform:translateY(-2px);box-shadow:0 0 40px rgba(60,231,255,0.18);">
+            <div aria-hidden="true" style="width:96px;height:96px;background-image:url(./assets/img0.jpg);background-size:495% auto;background-position:50.1% 50%;background-repeat:no-repeat;mix-blend-mode:screen;-webkit-mask-image:radial-gradient(circle,#000 45%,transparent 70%);mask-image:radial-gradient(circle,#000 45%,transparent 70%);"></div>
+            <div style="font-family:'Space Grotesk',sans-serif;font-size:24px;font-weight:600;color:#F2F6FC;margin-top:8px;">Program / Project</div>
+            <div style="font-size:15px;color:#C9D2E3;margin-top:6px;">Live task state, pass-rate and time forecasts, a decision record.</div>
+            <div style="margin-top:auto;padding-top:22px;min-height:56px;display:flex;align-items:flex-end;font-size:13px;line-height:1.3;color:#8F9BB2;text-transform:uppercase;letter-spacing:0.12em;">QC rounds per task · target for the pilot</div>
+            <div style="display:flex;align-items:baseline;gap:8px;margin-top:6px;font-variant-numeric:tabular-nums;"><span style="font-family:'Space Grotesk',sans-serif;font-size:44px;font-weight:600;color:#3CE7FF;">{{ youQc }}</span><span style="font-size:15px;color:#8F9BB2;">from up to 7</span></div>
+            <div style="height:8px;border-radius:4px;background:rgba(255,122,69,0.25);margin-top:10px;overflow:hidden;"><div style="height:100%;width:{{ youQcBar }};border-radius:4px;background:#3CE7FF;transition:width 1.4s cubic-bezier(.22,1,.36,1);"></div></div>
+          </div>
+          <div data-reveal="up" style="display:flex;flex-direction:column;padding:28px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.18);border-radius:24px;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);transition:transform .25s, box-shadow .25s;" style-hover="transform:translateY(-2px);box-shadow:0 0 40px rgba(139,124,255,0.22);">
+            <div aria-hidden="true" style="width:96px;height:96px;background-image:url(./assets/img0.jpg);background-size:495% auto;background-position:84.2% 50%;background-repeat:no-repeat;mix-blend-mode:screen;-webkit-mask-image:radial-gradient(circle,#000 45%,transparent 70%);mask-image:radial-gradient(circle,#000 45%,transparent 70%);"></div>
+            <div style="font-family:'Space Grotesk',sans-serif;font-size:24px;font-weight:600;color:#F2F6FC;margin-top:8px;">Pod lead</div>
+            <div style="font-size:15px;color:#C9D2E3;margin-top:6px;">Onboarding in days, one standard, knowledge that stays.</div>
+            <div style="margin-top:auto;padding-top:22px;min-height:56px;display:flex;align-items:flex-end;font-size:13px;line-height:1.3;color:#8F9BB2;text-transform:uppercase;letter-spacing:0.12em;">Onboarding · target for the pilot</div>
+            <div style="display:flex;align-items:baseline;gap:8px;margin-top:6px;font-variant-numeric:tabular-nums;"><span style="font-family:'Space Grotesk',sans-serif;font-size:44px;font-weight:600;color:#3CE7FF;">{{ youOnboard }}</span><span style="font-size:15px;color:#8F9BB2;">days</span></div>
+            <div style="height:8px;border-radius:4px;background:rgba(255,122,69,0.25);margin-top:10px;overflow:hidden;"><div style="height:100%;width:{{ youOnboardBar }};border-radius:4px;background:#8B7CFF;transition:width 1.4s cubic-bezier(.22,1,.36,1);"></div></div>
+          </div>
+          <div data-reveal="up" style="display:flex;flex-direction:column;padding:28px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.18);border-radius:24px;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);transition:transform .25s, box-shadow .25s;" style-hover="transform:translateY(-2px);box-shadow:0 0 40px rgba(60,231,255,0.18);">
+            <div aria-hidden="true" style="width:96px;height:96px;background-image:url(./assets/img8.jpg);background-size:415% auto;background-position:95% 49%;background-repeat:no-repeat;mix-blend-mode:screen;filter:contrast(1.7) brightness(0.8);-webkit-mask-image:radial-gradient(circle,#000 40%,transparent 58%);mask-image:radial-gradient(circle,#000 40%,transparent 58%);"></div>
+            <div style="font-family:'Space Grotesk',sans-serif;font-size:24px;font-weight:600;color:#F2F6FC;margin-top:8px;">Trainer</div>
+            <div style="font-size:15px;color:#C9D2E3;margin-top:6px;">The next step always named, no lost batteries, QC issues caught before upload.</div>
+            <div style="margin-top:auto;padding-top:22px;min-height:56px;display:flex;align-items:flex-end;font-size:13px;line-height:1.3;color:#8F9BB2;text-transform:uppercase;letter-spacing:0.12em;">Re-run after a dead container</div>
+            <div style="display:flex;align-items:baseline;gap:8px;margin-top:6px;font-variant-numeric:tabular-nums;"><span style="font-family:'Space Grotesk',sans-serif;font-size:44px;font-weight:600;color:#3CE7FF;">1 trial</span></div>
+            <span style="font-size:15px;color:#8F9BB2;">not the whole battery</span><div style="height:8px;border-radius:4px;background:rgba(255,122,69,0.25);margin-top:10px;overflow:hidden;"><div style="height:100%;width:{{ youTrainerBar }};border-radius:4px;background:#3CE7FF;transition:width 1.4s cubic-bezier(.22,1,.36,1);"></div></div>
+          </div>
+        </div>
+        <p style="font-size:13px;color:#8F9BB2;margin:16px 0 0;">Targets are proposals for the pilot and editable in the page's data block.</p>
+      </div>
+    </section>
+
+    <section id="ask" aria-label="Call to action" style="padding:140px 24px 100px;">
+      <div data-reveal="up" style="max-width:980px;margin:0 auto;text-align:center;padding:clamp(28px,5vw,64px);background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.18);border-radius:32px;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);box-shadow:0 0 80px rgba(60,231,255,0.12),inset 0 1px 0 rgba(255,255,255,0.14);">
+        <div style="font-family:'Space Grotesk',sans-serif;font-size:14px;letter-spacing:0.16em;text-transform:uppercase;color:#3CE7FF;">09 · The ask</div>
+        <h2 style="font-family:'Space Grotesk',sans-serif;font-size:clamp(34px,5vw,64px);font-weight:600;letter-spacing:-0.025em;line-height:1.05;margin:16px 0 28px;color:#F2F6FC;text-wrap:balance;">Pilot podkit v2 with one pod for two weeks</h2>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,190px),1fr));gap:12px;text-align:left;">
+          <div style="padding:16px 18px;border-radius:18px;background:rgba(7,11,20,0.5);border:1px solid rgba(255,255,255,0.14);font-family:'Space Grotesk',sans-serif;font-size:17px;font-weight:500;color:#F2F6FC;">Claim-to-submit</div>
+          <div style="padding:16px 18px;border-radius:18px;background:rgba(7,11,20,0.5);border:1px solid rgba(255,255,255,0.14);font-family:'Space Grotesk',sans-serif;font-size:17px;font-weight:500;color:#F2F6FC;">Discard rate</div>
+          <div style="padding:16px 18px;border-radius:18px;background:rgba(7,11,20,0.5);border:1px solid rgba(255,255,255,0.14);font-family:'Space Grotesk',sans-serif;font-size:17px;font-weight:500;color:#F2F6FC;">QC rounds per task</div>
+          <div style="padding:16px 18px;border-radius:18px;background:rgba(7,11,20,0.5);border:1px solid rgba(255,255,255,0.14);font-family:'Space Grotesk',sans-serif;font-size:17px;font-weight:500;color:#F2F6FC;">Acceptance rate</div>
+        </div>
+        <div style="display:flex;justify-content:center;margin-top:36px;">
+          <a href="mailto:hesham.f1@turing.com?subject=podkit%20v2%20pilot" style="font-family:'Space Grotesk',sans-serif;font-size:19px;font-weight:600;padding:18px 34px;border-radius:999px;background:#3CE7FF;color:#070B14;box-shadow:0 0 40px rgba(60,231,255,0.45);transition:transform .2s, box-shadow .2s;" style-hover="transform:translateY(-2px);box-shadow:0 0 64px rgba(60,231,255,0.7);color:#070B14;">Start the pilot</a>
+        </div>
+        <div style="margin-top:24px;display:flex;justify-content:center;align-items:center;gap:14px;font-size:15px;color:#AEB9CC;"><img src="./assets/hesham.jpg" alt="Hesham Aboul-Fetouh" style="width:48px;height:48px;border-radius:50%;object-fit:cover;object-position:60% 35%;border:1px solid rgba(255,255,255,0.3);"><span style="display:flex;flex-direction:column;align-items:flex-start;gap:2px;"><span style="font-family:'Space Grotesk',sans-serif;font-size:17px;font-weight:600;color:#F2F6FC;">Hesham Aboul-Fetouh</span><a href="mailto:hesham.f1@turing.com">hesham.f1@turing.com</a></span></div>
+      </div>
+    </section>
+
+    <footer style="padding:32px 24px 48px;text-align:center;font-size:13px;color:#6F7B92;">podkit · 30 Sep 2026 · Hesham Aboul-Fetouh</footer>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;motion&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;full&quot;,&quot;static&quot;],&quot;default&quot;:&quot;full&quot;,&quot;tsType&quot;:&quot;'full'|'static'&quot;}}">
+const FALLBACK = {"snapshots":[{"date":"17 Sep","day":0,"discarded":35,"never":65},{"date":"18 Sep","day":1,"discarded":59,"never":45},{"date":"21 Sep","day":4,"discarded":80,"never":47},{"date":"27 Sep","day":10,"discarded":322,"never":9},{"date":"30 Sep","day":13,"discarded":243,"never":141}],"trainersDiscarding":0,"tasksMultiDiscarded":0,"scopeHours":8,"tasks":[{"name":"Task A","hours":8.5,"batteries":8,"oracle":6,"days":4},{"name":"Task B","hours":56,"batteries":25,"oracle":45,"days":8,"qc":7},{"name":"Task C","hours":11,"batteries":8,"oracle":10,"days":3},{"name":"Task D","hours":20,"batteries":2,"oracle":14,"days":3}],"v2":{"tools":103,"skills":6,"commits":141,"days":12,"qcCriteria":59,"kbTasks":104,"kbTraps":546},"pilotTargets":{"discardsDownPct":50,"qcRoundsFrom":7,"qcRoundsTo":2,"onboardingDays":3}};
+
+const TILES = [
+  { title: 'Contradictory guidance', hint: 'Docs, threads and reviewers set different bars.', ex: 'Example: two guides give two different acceptance bars for the same task type.', pos: '1.5% 3%' },
+  { title: 'A 60–90 min fragile run loop', hint: 'One failure restarts the battery.', ex: 'Example: a container dies at minute 70 and the whole battery starts again.', pos: '50% 3%' },
+  { title: 'The calibration hunt', hint: 'Tuning until 1–2 of 4 oracle runs pass.', ex: 'Example: difficulty is tuned by trial and error, one full battery per attempt.', pos: '98.5% 3%' },
+  { title: 'QC ping-pong', hint: 'One finding per round.', ex: 'Example: Task B went through 7 QC rounds, each returning a single finding.', pos: '1.5% 97%' },
+  { title: 'Packaging traps', hint: 'Format errors surface after upload.', ex: 'Example: a package that runs locally fails the upload format check.', pos: '50% 97%' },
+  { title: 'Black boxes', hint: 'Fixes live in DMs and leave with people.', ex: 'Example: the fix for a known trap exists, but only in one private thread.', pos: '98.5% 97%' }
+];
+
+const NODE_POS = [['21.7%','22.8%'],['50%','12%'],['78.3%','22.8%'],['88.9%','51.6%'],['77.2%','80.5%'],['23%','80.5%'],['11%','51.6%']];
+const ICON = { compass: '-26px -236px', rocket: '-120px -236px', eye: '-214px -236px', list: '-308px -236px', box: '-26px -314px', books: '-167px -314px', brain: '-308px -314px' };
+const NODES = [
+  { name: 'Navigator', icon: 'compass', desc: 'Reads the task state and names the next step, tagged AUTO (it acts), SUGGEST (it proposes) or ASK (it needs you).' },
+  { name: 'Safe launcher', icon: 'rocket', desc: 'Takes locks and freezes the package before a run, so nothing changes under a battery mid-flight.' },
+  { name: 'Live watcher', icon: 'eye', desc: 'Streams agent step, last tool and pace. When a container dies it resumes just that trial.' },
+  { name: 'Local QC gates', icon: 'list', desc: '59 criteria plus the platform\u2019s own fairness probes, run locally before anything is uploaded.' },
+  { name: 'Packaging line', icon: 'box', desc: 'Generates README and review.csv at the accepted bar and checks the upload format.' },
+  { name: 'Knowledge base', icon: 'books', desc: '104 accepted tasks and 546 known traps, loaded by every agent at the start of every session.' },
+  { name: 'Six agent skills', icon: 'brain', desc: 'Reusable workflows the agents call on demand, so every trainer works to one standard.' }
+];
+const CORE = { name: 'One source of truth', desc: 'Task state, guidance and history in one place. Every module and every agent reads from the same record.' };
+
+const STN = [
+  { name: 'Navigator', icon: 'compass' }, { name: 'Launcher', icon: 'rocket' }, { name: 'Live watcher', icon: 'eye' },
+  { name: 'Local QC', icon: 'list' }, { name: 'Packaging line', icon: 'box' }, { name: 'Submitted', icon: 'books' }
+];
+const PH = {
+  with: [0, 800, 2300, 3800, 7800, 11800, 13800], end: 14600,
+  without: [0, 800, 2300, 3800, 6800, 9300, 9300], endW: 11200
+};
+const TERM_WITH = [
+  ['› agent step 12 · last tool: run_oracle · pace 1.0×', '#9FB0C8'],
+  ['› agent step 19 · last tool: pytest -q · pace 1.1×', '#9FB0C8'],
+  ['› trial 3/4 · container died', '#FF9A70'],
+  ['› resuming just that trial …', '#3CE7FF'],
+  ['› trial 3/4 · resumed · pace 1.0', '#3CE7FF'],
+  ['✓ battery complete · 4/4 trials', '#7CF2C8']
+];
+const TERM_WITHOUT = [
+  ['› run 1 · manual launch · 00:42 elapsed', '#9FB0C8'],
+  ['› container died', '#FF9A70'],
+  ['› battery restarts from zero', '#FF9A70'],
+  ['› 60–90 min lost', '#FF7A45']
+];
+
+class Component extends DCLogic {
+  state = { poolT: 0, lane: 1, tile: -1, node: -1, mode: 'with', simT: 0, playing: false, seen: {}, heroDone: false, vCount: 0 };
+  rootRef = React.createRef(); poolRef = React.createRef(); poolSecRef = React.createRef(); heroRef = React.createRef();
+  blob1 = React.createRef(); blob2 = React.createRef(); blob3 = React.createRef(); ctaRef = React.createRef(); orbitRef = React.createRef();
+
+  get data() {
+    if (!this._d) {
+      try { this._d = JSON.parse(document.getElementById('podkit-data').textContent); } catch (e) { this._d = FALLBACK; }
+    }
+    return this._d;
+  }
+  reduced() { return this.props.motion === 'static' || window.matchMedia('(prefers-reduced-motion: reduce)').matches; }
+
+  componentDidMount() {
+    this._d = null;
+    const still = this.reduced();
+    if (!still) {
+      [[this.blob1, '8vw,6vh', 26000], [this.blob2, '-10vw,8vh', 32000], [this.blob3, '6vw,-8vh', 28000]].forEach(([r, xy, dur]) => {
+        if (r.current) r.current.animate([{ transform: 'translate(0,0)' }, { transform: 'translate(' + xy + ')' }], { duration: dur, direction: 'alternate', iterations: Infinity, easing: 'ease-in-out' });
+      });
+      if (this.ctaRef.current) this.ctaRef.current.animate([{ boxShadow: '0 0 0 rgba(60,231,255,0)' }, { boxShadow: '0 0 36px rgba(60,231,255,0.55)' }, { boxShadow: '0 0 0 rgba(60,231,255,0)' }], { duration: 8000, iterations: Infinity, easing: 'ease-in-out' });
+      if (this.orbitRef.current) this.orbitRef.current.animate([{ transform: 'rotate(0deg)' }, { transform: 'rotate(360deg)' }], { duration: 60000, iterations: Infinity });
+    }
+    this.hero(still);
+    this.onScroll = () => {
+      const el = this.poolRef.current; if (!el) return;
+      if (performance.now() - (this._scrubAt || 0) < 600) return;
+      const sec = this.poolSecRef.current;
+      const off = sec ? Math.min(0, window.innerHeight - sec.offsetHeight) : 0;
+      if (sec && sec.style.top !== off + 'px') sec.style.top = off + 'px';
+      const r = el.getBoundingClientRect();
+      const p = Math.min(1, Math.max(0, (off - r.top) / window.innerHeight));
+      const t = Math.round(p * 4 * 100) / 100;
+      if (Math.abs(t - this.state.poolT) > 0.009) this.setState({ poolT: t });
+    };
+    window.addEventListener('scroll', this.onScroll, { passive: true });
+    window.addEventListener('resize', this.onScroll);
+    this.onScroll();
+    this.setupObservers(still);
+  }
+  componentWillUnmount() {
+    window.removeEventListener('scroll', this.onScroll);
+    window.removeEventListener('resize', this.onScroll);
+    if (this.io) this.io.disconnect();
+    if (this.io2) this.io2.disconnect();
+    clearInterval(this.simTimer); cancelAnimationFrame(this.heroRaf); cancelAnimationFrame(this.vRaf);
+  }
+
+  setupObservers(still) {
+    const root = this.rootRef.current; if (!root) return;
+    this.io = new IntersectionObserver((entries) => {
+      entries.forEach((en) => {
+        if (!en.isIntersecting) return;
+        const el = en.target; this.io.unobserve(el);
+        if (still) return;
+        const kind = el.dataset.reveal;
+        const sib = el.parentElement ? Array.prototype.indexOf.call(el.parentElement.children, el) : 0;
+        const delay = Math.min(sib, 6) * 80;
+        const from = kind === 'flip' ? { opacity: 0, transform: 'rotateX(70deg) translateY(24px)' } : kind === 'left' ? { opacity: 0, transform: 'translateX(-40px)' } : { opacity: 0, transform: 'translateY(24px)' };
+        el.animate([from, { opacity: 1, transform: 'none' }], { duration: kind === 'flip' ? 800 : 700, delay, easing: 'cubic-bezier(.16,1,.3,1)', fill: 'backwards', composite: 'replace' });
+      });
+    }, { threshold: 0.15 });
+    root.querySelectorAll('[data-reveal]').forEach((el) => this.io.observe(el));
+
+    this.io2 = new IntersectionObserver((entries) => {
+      entries.forEach((en) => {
+        if (!en.isIntersecting) return;
+        const el = en.target; this.io2.unobserve(el);
+        if (el.dataset.count != null) { this.countUp(el, still); return; }
+        const key = el.dataset.seen;
+        this.setState((s) => ({ seen: Object.assign({}, s.seen, { [key]: true }) }));
+        if (key === 'sim' && !this.state.playing && this.state.simT === 0) this.play();
+        if (key === 'vision') this.runVision(still);
+      });
+    }, { threshold: 0.3 });
+    root.querySelectorAll('[data-seen],[data-count]').forEach((el) => this.io2.observe(el));
+  }
+
+  countUp(el, still) {
+    if (el._orig == null) el._orig = el.textContent;
+    if (still || document.hidden) return;
+    const to = parseFloat(el.dataset.count), dur = 1300, t0 = performance.now();
+    clearTimeout(el._ft); el._ft = setTimeout(() => { el.textContent = el._orig; }, dur + 200);
+    const step = (now) => { const p = Math.min(1, (now - t0) / dur), k = 1 - Math.pow(1 - p, 3); if (p < 1) { el.textContent = Math.round(to * k); requestAnimationFrame(step); } else el.textContent = el._orig; };
+    requestAnimationFrame(step);
+  }
+
+  runVision(still) {
+    const target = 380;
+    if (still) { this.setState({ vCount: target }); return; }
+    const t0 = performance.now(), dur = 4000;
+    setTimeout(() => this.setState({ vCount: target }), dur + 300);
+    const step = (now) => { const p = Math.min(1, (now - t0) / dur); this.setState({ vCount: Math.round(target * (1 - Math.pow(1 - p, 2))) }); if (p < 1) this.vRaf = requestAnimationFrame(step); };
+    this.vRaf = requestAnimationFrame(step);
+  }
+
+  hero(still) {
+    const cv = this.heroRef.current; if (!cv) { this.setState({ heroDone: true }); return; }
+    if (still) { this.setState({ heroDone: true }); return; }
+    const ctx = cv.getContext('2d'), N = 180, R = 150, C = 280;
+    const verts = Array.from({ length: 6 }, (_, i) => [C + R * Math.cos(Math.PI / 3 * i - Math.PI / 2), C + R * Math.sin(Math.PI / 3 * i - Math.PI / 2)]);
+    const pts = Array.from({ length: N }, (_, i) => {
+      const e = i % 6, f = (i / N * 6) % 1, a = verts[e], b = verts[(e + 1) % 6];
+      return { sx: Math.random() * 560, sy: Math.random() * 560, tx: a[0] + (b[0] - a[0]) * f, ty: a[1] + (b[1] - a[1]) * f, d: Math.random() * 500, c: Math.random() < 0.8 ? '60,231,255' : '139,124,255' };
+    });
+    const t0 = performance.now(), dur = 1800;
+    const draw = (now) => {
+      const el = now - t0; ctx.clearRect(0, 0, 560, 560);
+      for (const p of pts) {
+        const u = Math.min(1, Math.max(0, (el - p.d) / dur)), k = 1 - Math.pow(1 - u, 3);
+        const x = p.sx + (p.tx - p.sx) * k, y = p.sy + (p.ty - p.sy) * k;
+        const fade = el > dur + 700 ? Math.max(0, 1 - (el - dur - 700) / 900) : 1;
+        ctx.beginPath(); ctx.arc(x, y, 1.6, 0, 6.283); ctx.fillStyle = 'rgba(' + p.c + ',' + (0.85 * fade) + ')'; ctx.fill();
+      }
+      if (el > dur + 300 && !this.state.heroDone) this.setState({ heroDone: true });
+      if (el < dur + 1700) this.heroRaf = requestAnimationFrame(draw); else ctx.clearRect(0, 0, 560, 560);
+    };
+    this.heroRaf = requestAnimationFrame(draw);
+    setTimeout(() => { if (!this.state.heroDone) this.setState({ heroDone: true }); }, 3000);
+  }
+
+  play(mode) {
+    clearInterval(this.simTimer);
+    const m = mode || this.state.mode;
+    if (this.reduced()) { this.setState({ mode: m, simT: 99999, playing: false }); return; }
+    this.setState({ mode: m, simT: 0, playing: true });
+    const end = m === 'with' ? PH.end : PH.endW;
+    this.simTimer = setInterval(() => {
+      this.setState((s) => {
+        const t = s.simT + 80;
+        if (t >= end) { clearInterval(this.simTimer); return { simT: end, playing: false }; }
+        return { simT: t };
+      });
+    }, 80);
+  }
+
+  renderVals() {
+    const D = this.data, S = D.snapshots, st = this.state;
+    const lastDay = S[S.length - 1].day || 1;
+    const X = (d) => 40 + d / lastDay * 740, Y = (v) => 330 - v / 450 * 310;
+    const xs = S.map((s) => X(s.day)), tot = S.map((s) => s.discarded + s.never);
+    const pt = (arr) => arr.map((v, i) => xs[i].toFixed(1) + ' ' + Y(v).toFixed(1));
+    const discPts = pt(S.map((s) => s.discarded)), totPts = pt(tot);
+    const discArea = 'M' + xs[0] + ' 330 L' + discPts.join(' L') + ' L' + xs[xs.length - 1] + ' 330 Z';
+    const nevArea = 'M' + totPts.join(' L') + ' L' + discPts.slice().reverse().join(' L') + ' Z';
+    const totalLine = 'M' + totPts.join(' L');
+    const t = Math.min(S.length - 1, Math.max(0, st.poolT)), i0 = Math.floor(t), i1 = Math.min(S.length - 1, i0 + 1), f = t - i0;
+    const lerp = (a, b) => a + (b - a) * f;
+    const disc = Math.round(lerp(S[i0].discarded, S[i1].discarded)), nev = Math.round(lerp(S[i0].never, S[i1].never)), total = disc + nev;
+    const curX = lerp(xs[i0], xs[i1]);
+    const nearest = Math.round(t);
+    const nCards = Math.round(total / 5), nDisc = Math.round(disc / 5);
+    const poolCards = Array.from({ length: nCards }, (_, k) => k < nDisc
+      ? { bg: '#FF7A45', glow: '0 0 6px rgba(255,122,69,0.5)' }
+      : { bg: 'rgba(167,176,194,0.55)', glow: 'none' });
+    const snapLabels = S.map((s, k) => ({
+      x: xs[k], label: k === 0 || k === S.length - 1 ? s.date : s.date.split(' ')[0], full: s.date,
+      bg: k === nearest ? 'rgba(255,122,69,0.22)' : 'rgba(255,255,255,0.06)',
+      border: k === nearest ? 'rgba(255,122,69,0.7)' : 'rgba(255,255,255,0.16)',
+      onClick: () => { this._scrubAt = performance.now() + 100000; this.setState({ poolT: k }); setTimeout(() => { this._scrubAt = performance.now(); }, 50); }
+    }));
+
+    const seenRace = !!st.seen.race || this.reduced();
+    const maxH = 60;
+    const lanes = D.tasks.map((tk, k) => {
+      const w = tk.hours / maxH * 100;
+      return {
+        name: tk.name.replace('Task ', ''), hLabel: (tk.hours / (D.scopeHours || 8)).toFixed(1).replace(/\.0$/, '') + '× scope',
+        width: seenRace ? w + '%' : '0%', labelLeft: seenRace ? w + '%' : '0%', dur: (1.2 + tk.hours / 40) + 's',
+        border: st.lane === k ? 'rgba(255,122,69,0.6)' : 'rgba(255,255,255,0.08)',
+        labelColor: st.lane === k ? '#FF7A45' : '#F2F6FC',
+        onEnter: () => this.setState({ lane: k })
+      };
+    });
+    const L = D.tasks[st.lane] || D.tasks[0];
+    const laneDetail = { name: L.name, hours: (L.hours / (D.scopeHours || 8)).toFixed(1).replace(/\.0$/, '') + '× scope', batteries: L.batteries, oracle: L.oracle, days: L.days, hasQc: L.qc != null, qc: L.qc };
+
+    const tiles = TILES.map((tl, k) => {
+      const on = st.tile === k;
+      return {
+        title: tl.title, text: on ? tl.ex : tl.hint, pos: tl.pos,
+        textColor: on ? '#FFD2BF' : '#B9C4D8',
+        border: on ? 'rgba(255,122,69,0.55)' : 'rgba(255,255,255,0.18)',
+        glow: on ? '0 0 40px rgba(255,122,69,0.2)' : 'inset 0 1px 0 rgba(255,255,255,0.12)',
+        lift: on ? 'translateY(-2px)' : 'none',
+        onEnter: () => this.setState({ tile: k }), onLeave: () => this.setState({ tile: -1 })
+      };
+    });
+
+    const nodes = NODES.map((n, k) => {
+      const on = st.node === k;
+      return {
+        name: n.name, left: NODE_POS[k][0], top: NODE_POS[k][1], pos: ICON[n.icon],
+        transform: on ? 'translate(-50%,-50%) scale(1.08)' : 'translate(-50%,-50%)',
+        border: on ? 'rgba(60,231,255,0.9)' : 'transparent',
+        glow: on ? '0 0 32px rgba(60,231,255,0.6), inset 0 0 20px rgba(60,231,255,0.3)' : 'none',
+        onEnter: () => this.setState({ node: k })
+      };
+    });
+    const activeNode = st.node >= 0 ? NODES[st.node] : CORE;
+
+    const W = st.mode === 'with', T = st.simT, ph = W ? PH.with : PH.without;
+    let cur = 0; for (let k = 0; k < 6; k++) if (T >= ph[k + 1]) cur = k + 1;
+    const doneAll = W ? T >= PH.with[6] : T >= PH.endW - 400;
+    const failed = !W && T >= PH.without[5];
+    const stationStatus = (k) => {
+      if (W) return ['next step: harborcheck · AUTO', 'locks held · package frozen', 'container died → resumed trial 3 → 1.0', qcG + '/59 · 3 caught before upload', 'README.md · review.csv generated', 'package submitted'][k];
+      return ['3 docs disagree · guessing', 'manual launch · no lock', 'container died → battery restarts', 'uploaded · finding 1 of ?', 'not reached', 'discarded → back to the pool'][k];
+    };
+    let qcG = 0;
+    if (W) { const u = (T - ph[4]) / 3000; qcG = T < ph[4] ? 0 : Math.min(59, Math.floor(u * 59)); }
+    const emberIdx = W ? [7, 23, 41] : [3, 18, 30, 47];
+    const qcFixed = W && T >= ph[4] + 3500;
+    const qcLights = Array.from({ length: 59 }, (_, k) => {
+      let bg = 'rgba(255,255,255,0.08)', glow = 'none';
+      if (W) {
+        if (k < qcG || qcFixed) {
+          if (emberIdx.includes(k) && !qcFixed) { bg = '#FF7A45'; glow = '0 0 10px rgba(255,122,69,0.8)'; }
+          else { bg = '#5FF0C8'; glow = '0 0 8px rgba(95,240,200,0.6)'; }
+        }
+      } else if (T >= ph[4] + 900 && emberIdx.includes(k)) { bg = '#FF7A45'; glow = '0 0 10px rgba(255,122,69,0.8)'; }
+      return { bg, glow };
+    });
+    const qcLabel = W ? (T < ph[4] ? 'waiting' : qcFixed ? '59/59 green · 3 caught before upload' : qcG + '/59 checked') : (T >= ph[4] ? 'no local checks · findings arrive after upload' : 'not run locally');
+    const stations = STN.map((sn, k) => {
+      const active = cur === k + 1 && !doneAll, done = cur > k + 1 || (doneAll && W) || (W && cur === 6);
+      const reached = cur >= k + 1;
+      const skipped = !W && k === 4 && failed;
+      const failStation = !W && k === 5 && failed;
+      let status = reached ? stationStatus(k) : 'waiting';
+      if (skipped) status = 'not reached';
+      const hot = W ? (active || done) : (reached || failStation);
+      return {
+        name: sn.name, status, num: '0' + (k + 1), iconPos: ICON[sn.icon] ? ICON[sn.icon].split(' ').map((v) => (parseFloat(v) * 44 / 52) + 'px').join(' ') : '0 0', iconSize: (409.6 * 44 / 52) + 'px',
+        bg: hot ? (W ? 'rgba(60,231,255,0.08)' : 'rgba(255,122,69,0.07)') : 'rgba(255,255,255,0.04)',
+        border: hot ? (W ? 'rgba(60,231,255,0.55)' : 'rgba(255,122,69,0.45)') : 'rgba(255,255,255,0.14)',
+        borderStyle: W ? 'solid' : 'dashed',
+        opacity: W ? (reached ? 1 : 0.55) : (reached ? 0.8 : 0.4),
+        glow: active && W ? '0 0 32px rgba(60,231,255,0.3)' : 'none',
+        statusColor: reached ? (W ? '#9AF3FF' : '#FFB08F') : '#6F7B92'
+      };
+    });
+    const termSrc = W ? TERM_WITH : TERM_WITHOUT;
+    const termStart = ph[3], termStep = W ? 600 : 650;
+    const nLines = T < termStart ? 0 : Math.min(termSrc.length, 1 + Math.floor((T - termStart) / termStep));
+    const termLines = termSrc.slice(0, nLines).map(([text, color]) => ({ text, color }));
+    const pkgFiles = [
+      { name: 'README.md', at: ph[5] + 600 }, { name: 'review.csv', at: ph[5] + 1300 }
+    ].map((p) => {
+      const on = W && T >= p.at;
+      return { text: (on ? '✓ ' : '· ') + p.name, color: on ? '#7CF2C8' : '#6F7B92', border: on ? 'rgba(124,242,200,0.5)' : 'rgba(255,255,255,0.12)' };
+    });
+    let cardPos = cur === 0 ? -6 : (cur - 1) / 5 * 100;
+    if (W && cur >= 6) cardPos = 100;
+    if (!W && failed) cardPos = -6;
+    const resultText = doneAll ? (W ? 'Submitted on the first upload. The pool is one task lighter.' : 'Discarded. Back to the pool for the next trainer.') : (st.playing ? (W ? 'Running with podkit v2…' : 'Running without podkit…') : 'Press play to run the task.');
+
+    const vc = st.vCount, vr = vc / 380;
+    const P = D.pilotTargets || FALLBACK.pilotTargets, seenYou = !!st.seen.you || this.reduced();
+
+    return {
+      rootRef: this.rootRef, poolRef: this.poolRef, poolSecRef: this.poolSecRef, heroRef: this.heroRef, blob1: this.blob1, blob2: this.blob2, blob3: this.blob3, ctaRef: this.ctaRef, orbitRef: this.orbitRef,
+      heroHexOpacity: st.heroDone ? 1 : 0, heroHexTransform: st.heroDone ? 'scale(1)' : 'scale(0.9)',
+      startSim: () => { const el = document.getElementById('pool'); if (el) window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY, behavior: this.reduced() ? 'auto' : 'smooth' }); },
+      poolT: t, poolDate: S[nearest].date, poolTotal: total, poolDisc: disc, poolNever: nev,
+      poolClipW: curX + 2, poolCursorX: curX, poolCursorY: Y(total),
+      discArea, nevArea, totalLine, snapLabels, poolCards,
+      onScrub: (e) => { this._scrubAt = performance.now(); this.setState({ poolT: parseFloat(e.target.value) }); },
+      lanes, laneDetail, tiles, nodes, activeNode, coreEnter: () => this.setState({ node: -1 }),
+      coreBorder: st.node === -1 ? 'rgba(60,231,255,0.9)' : 'transparent',
+      coreGlow: st.node === -1 ? '0 0 40px rgba(60,231,255,0.5)' : 'none',
+      isWith: W, isWithout: !W,
+      withBg: W ? '#3CE7FF' : 'transparent', withColor: W ? '#070B14' : '#C9D2E3',
+      withoutBg: !W ? '#FF7A45' : 'transparent', withoutColor: !W ? '#070B14' : '#C9D2E3',
+      setWith: () => this.play('with'), setWithout: () => this.play('without'), replay: () => this.play(),
+      playLabel: st.playing ? 'Restart' : (T > 0 ? 'Replay' : 'Play'),
+      discardPile: 260 + (!W && doneAll ? 1 : 0), submitted: W && doneAll ? 1 : 0,
+      trackBg: W ? 'linear-gradient(90deg,rgba(60,231,255,0.2),rgba(60,231,255,0.6))' : 'repeating-linear-gradient(90deg,rgba(255,122,69,0.4) 0 10px,transparent 10px 20px)',
+      cardLeft: cardPos + '%', cardBg: W ? (cur >= 6 ? '#3CE7FF' : '#E8EEF8') : '#FF7A45',
+      cardGlow: W ? '0 0 24px rgba(60,231,255,0.7)' : '0 0 24px rgba(255,122,69,0.7)',
+      stations, termLines, termDot: st.playing ? '#5FF0C8' : '#6F7B92', qcLights, qcLabel, qcLabelColor: W ? '#9AF3FF' : '#FFB08F', pkgFiles,
+      resultText, resultColor: doneAll ? (W ? '#3CE7FF' : '#FF7A45') : '#C9D2E3',
+      visionCount: vc, engineFilter: 'brightness(' + (0.7 + vr * 0.6).toFixed(2) + ') saturate(' + (0.8 + vr * 0.5).toFixed(2) + ')',
+      ringAlpha: (0.1 + vr * 0.4).toFixed(2), ringOpacity: (0.35 + vr * 0.65).toFixed(2),
+      youDiscards: seenYou ? P.discardsDownPct : 0, youDiscardBar: seenYou ? (100 - P.discardsDownPct) + '%' : '100%',
+      youQc: seenYou ? P.qcRoundsTo : P.qcRoundsFrom, youQcBar: seenYou ? (P.qcRoundsTo / P.qcRoundsFrom * 100) + '%' : '100%',
+      youOnboard: P.onboardingDays, youOnboardBar: seenYou ? '30%' : '100%', youTrainerBar: seenYou ? '25%' : '100%'
+    };
+  }
+}
+</script>
+</body>
+</html>
